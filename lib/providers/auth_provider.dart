@@ -1,141 +1,151 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:sunu_task/models/User.dart';
 import 'package:sunu_task/services/storage_service.dart';
+import 'package:uuid/uuid.dart';
 
-/// Provider qui gère l'authentification (connexion / inscription / déconnexion)
-/// Version très simple sans JSON → on stocke les champs un par un
-class GestionAuth extends ChangeNotifier {
+class AuthProvider extends ChangeNotifier {
   // ────────────────────────────────────────────────
-  // État actuel
+  // État
   // ────────────────────────────────────────────────
-  User? _utilisateurConnecte;
-  bool _chargementEnCours = false;
-  String? _messageErreur;
+  User? _currentUser;
+  List<User> _users = [];
+  bool _isLoading = false;
+  String? _errorMessage;
 
-  // Getters (pour que les écrans puissent lire l'état)
-  User? get utilisateurConnecte => _utilisateurConnecte;
-  bool get estConnecte => _utilisateurConnecte != null;
-  bool get chargementEnCours => _chargementEnCours;
-  String? get messageErreur => _messageErreur;
+  // Getters
+  User? get currentUser => _currentUser;
+  bool get isAuthenticated => _currentUser != null;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
   // ────────────────────────────────────────────────
-  /// Charge l'utilisateur s'il était déjà connecté (au démarrage)
-  Future<void> chargerUtilisateur() async {
-    _chargementEnCours = true;
-    notifyListeners(); // prévient l'interface qu'on est en train de charger
+  /// À appeler une fois au démarrage de l'application
+  Future<void> initialize() async {
+    _isLoading = true;
+    notifyListeners();
 
-    // On récupère chaque champ séparément depuis SharedPreferences
-    final id = StorageService.instance.getString('auth_id');
-    final nom = StorageService.instance.getString('auth_nom');
-    final email = StorageService.instance.getString('auth_email');
-    final motDePasse = StorageService.instance.getString('auth_mdp');
-    final avatar = StorageService.instance.getString('auth_avatar');
-
-    // Si au moins l'email existe → on considère qu'il y a un utilisateur
-    if (email != null && email.isNotEmpty) {
-      _utilisateurConnecte = User(
-        id: id ?? 'user_inconnu',
-        name: nom ?? 'Utilisateur',
-        email: email,
-        password: motDePasse ?? '',
-        avatar: avatar,
-      );
+    // Charger tous les utilisateurs
+    final jsonString = StorageService.instance.getString('users');
+    if (jsonString != null && jsonString.isNotEmpty) {
+      try {
+        final List<dynamic> decoded = jsonDecode(jsonString);
+        _users = decoded.map((map) => User.fromMap(map as Map<String, dynamic>)).toList();
+      } catch (e) {
+        debugPrint('Erreur lors du chargement des utilisateurs : $e');
+      }
     }
 
-    _chargementEnCours = false;
+    // Charger l'utilisateur actuellement connecté
+    final currentId = StorageService.instance.getString('current_user_id');
+    if (currentId != null) {
+      try {
+        _currentUser = _users.firstWhere((u) => u.id == currentId);
+      } catch (_) {
+        // Pas trouvé → on reste déconnecté
+      }
+    }
+
+    _isLoading = false;
     notifyListeners();
   }
 
   // ────────────────────────────────────────────────
-  /// Connexion (simulation très basique pour l'instant)
-  Future<bool> seConnecter({
+  /// Connexion
+  Future<bool> login({
     required String email,
-    required String motDePasse,
+    required String password,
   }) async {
-    _chargementEnCours = true;
-    _messageErreur = null;
+    _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
-    // Petite attente pour simuler un appel réseau
-    await Future.delayed(const Duration(milliseconds: 900));
-
-    // Pour l'instant : on accepte presque tout (à améliorer plus tard)
-    // Dans une vraie version on vérifierait si ça correspond à un utilisateur existant
-    _utilisateurConnecte = User(
-      id: 'u_${DateTime.now().millisecondsSinceEpoch}',
-      name: 'Utilisateur Test',
-      email: email,
-      password: motDePasse,
+    final foundUser = _users.firstWhere(
+          (user) => user.email == email && user.password == password,
+      orElse: () => null as User,
     );
 
-    // Sauvegarde chaque champ séparément
-    await StorageService.instance.setString('auth_id', _utilisateurConnecte!.id);
-    await StorageService.instance.setString('auth_nom', _utilisateurConnecte!.name);
-    await StorageService.instance.setString('auth_email', _utilisateurConnecte!.email);
-    await StorageService.instance.setString('auth_mdp', _utilisateurConnecte!.password);
-    if (_utilisateurConnecte!.avatar != null) {
-      await StorageService.instance.setString('auth_avatar', _utilisateurConnecte!.avatar!);
+    if (foundUser != null) {
+      _currentUser = foundUser;
+      await StorageService.instance.setString('current_user_id', foundUser.id);
+      _isLoading = false;
+      notifyListeners();
+      return true;
     }
 
-    _chargementEnCours = false;
+    _errorMessage = "Email ou mot de passe incorrect";
+    _isLoading = false;
+    notifyListeners();
+    return false;
+  }
+
+  // ────────────────────────────────────────────────
+  /// Inscription
+  Future<bool> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    // Vérifier unicité email
+    if (_users.any((u) => u.email == email)) {
+      _errorMessage = "Cet email est déjà utilisé";
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+
+    // Créer nouvel utilisateur
+    final newId = const Uuid().v4();
+    final newUser = User(
+      id: newId,
+      name: name,
+      email: email,
+      password: password,
+      createdAt: DateTime.now(),
+    );
+
+    _users.add(newUser);
+    _currentUser = newUser;
+
+    // Sauvegarder la liste complète
+    await _saveUsersList();
+
+    // Marquer comme connecté
+    await StorageService.instance.setString('current_user_id', newId);
+
+    _isLoading = false;
     notifyListeners();
     return true;
   }
 
   // ────────────────────────────────────────────────
-  /// Inscription (simulation très basique)
-  Future<bool> sinscrire({
-    required String nom,
-    required String email,
-    required String motDePasse,
-  }) async {
-    _chargementEnCours = true;
-    _messageErreur = null;
+  Future<void> logout() async {
+    _isLoading = true;
     notifyListeners();
 
-    await Future.delayed(const Duration(milliseconds: 900));
+    _currentUser = null;
+    await StorageService.instance.remove('current_user_id');
 
-    // Pour l'instant on accepte tout (pas de vérification unicité email)
-    _utilisateurConnecte = User(
-      id: 'u_${DateTime.now().millisecondsSinceEpoch}',
-      name: nom,
-      email: email,
-      password: motDePasse,
-    );
-
-    // Sauvegarde
-    await StorageService.instance.setString('auth_id', _utilisateurConnecte!.id);
-    await StorageService.instance.setString('auth_nom', _utilisateurConnecte!.name);
-    await StorageService.instance.setString('auth_email', _utilisateurConnecte!.email);
-    await StorageService.instance.setString('auth_mdp', _utilisateurConnecte!.password);
-
-    _chargementEnCours = false;
+    _isLoading = false;
     notifyListeners();
-    return true;
   }
 
   // ────────────────────────────────────────────────
-  /// Déconnexion
-  Future<void> seDeconnecter() async {
-    _chargementEnCours = true;
-    notifyListeners();
-
-    _utilisateurConnecte = null;
-
-    // On supprime toutes les clés liées à l'auth
-    await StorageService.instance.remove('auth_id');
-    await StorageService.instance.remove('auth_nom');
-    await StorageService.instance.remove('auth_email');
-    await StorageService.instance.remove('auth_mdp');
-    await StorageService.instance.remove('auth_avatar');
-
-    _chargementEnCours = false;
-    notifyListeners();
+  /// Sauvegarde la liste entière des utilisateurs en JSON
+  Future<void> _saveUsersList() async {
+    final jsonString = jsonEncode(
+      _users.map((user) => user.toMap()).toList(),
+    );
+    await StorageService.instance.setString('users', jsonString);
   }
 
-  /// Efface le message d'erreur affiché
-  void effacerErreur() {
-    _messageErreur = null;
+  void clearError() {
+    _errorMessage = null;
     notifyListeners();
   }
 }
