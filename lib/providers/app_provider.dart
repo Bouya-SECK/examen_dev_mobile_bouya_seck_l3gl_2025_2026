@@ -1,60 +1,55 @@
-import 'package:flutter/foundation.dart'; // Pour ChangeNotifier
+import 'package:flutter/foundation.dart';
 import 'package:sunu_task/services/storage_service.dart';
 
-/// AppProvider : gère l'état global de l'application
-/// (onboarding terminé ou pas, si l'app est initialisée, etc.)
-class AppProvider extends ChangeNotifier
-{
-  // ==================== PROPRIÉTÉS PRIVÉES ====================
-  bool _isOnboardingComplete = false;
-  bool _isInitialized = false;
-  bool _isLoading = false;
+/// Gère l'état global de l'application (onboarding, chargement, etc.)
+class GestionApp extends ChangeNotifier {
+  // --- État privé ---
+  bool _onboardingTermine = false;
+  bool _initialise = false;
+  bool _enChargement = false;
 
-  // ==================== GETTERS PUBLICS ====================
-  // Ces getters permettent aux widgets de lire l'état
-  bool get isOnboardingComplete => _isOnboardingComplete;
-  bool get isInitialized => _isInitialized;
-  bool get isLoading => _isLoading;
-
-  // ==================== MÉTHODES ====================
+  // --- Getters (pour lire l'état depuis les écrans) ---
+  bool get onboardingTermine => _onboardingTermine;
+  bool get initialise => _initialise;
+  bool get enChargement => _enChargement;
 
   /// Initialise l'application au démarrage
-  /// Charge l'état de l'onboarding depuis le stockage
-  Future<void> init() async {
-    _isLoading = true;
-    notifyListeners(); // Met à jour l'UI (affiche un loader par exemple)
+  Future<void> initialiser() async {
+    _enChargement = true;
+    notifyListeners();
 
-    // On initialise le StorageService (comme dans le onboarding_screen)
+    // On s'assure que le service de stockage est prêt
     await StorageService.instance.init();
 
-    // On récupère la valeur sauvegardée
-    _isOnboardingComplete = StorageService.instance.isOnboardingComplete;
-    _isInitialized = true;
-    _isLoading = false;
+    // On lit si l'onboarding a déjà été vu
+    _onboardingTermine = StorageService.instance.isOnboardingComplete;
 
-    notifyListeners(); // Met à jour l'UI avec les nouvelles valeurs
+    _initialise = true;
+    _enChargement = false;
+
+    notifyListeners();
   }
 
-  /// Marque l'onboarding comme terminé et le sauvegarde
-  Future<void> completeOnboarding() async {
-    _isLoading = true;
+  /// Marque l'onboarding comme terminé et sauvegarde
+  Future<void> terminerOnboarding() async {
+    _enChargement = true;
     notifyListeners();
 
     await StorageService.instance.setOnboardingComplete(true);
-    _isOnboardingComplete = true;
-    _isLoading = false;
+    _onboardingTermine = true;
+    _enChargement = false;
 
     notifyListeners();
   }
 
-  /// Réinitialise l'onboarding (utile pour les tests ou debug)
-  Future<void> resetOnboarding() async {
-    _isLoading = true;
+  /// (Optionnel - utile pour tester) Réinitialise l'onboarding
+  Future<void> reinitialiserOnboarding() async {
+    _enChargement = true;
     notifyListeners();
 
     await StorageService.instance.setOnboardingComplete(false);
-    _isOnboardingComplete = false;
-    _isLoading = false;
+    _onboardingTermine = false;
+    _enChargement = false;
 
     notifyListeners();
   }
