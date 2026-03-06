@@ -254,4 +254,11 @@ class TaskProvider extends ChangeNotifier {
 
     await StorageService.instance.setString(_keyTasks, jsonEncode(allTasks));
   }
+
+  /// Supprime toutes les tâches d'un projet (appelée quand on supprime un projet)
+  Future<void> deleteTasksByProjectId(String projectId) async {
+    _tasks.removeWhere((t) => t.projectId == projectId);
+    await _saveTasksList();
+    notifyListeners();
+  }
 }
