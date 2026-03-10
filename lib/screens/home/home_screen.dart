@@ -14,6 +14,8 @@ import 'package:sunu_task/screens/home/tabs/profile_tab.dart';
 import 'package:sunu_task/screens/home/tabs/projects_tab.dart';
 import 'package:sunu_task/screens/home/tabs/tasks_tab.dart';
 
+import '../projects/project_form_screen.dart';
+
 /// Écran principal avec navigation par onglets.
 /// C'est le premier écran affiché après la connexion.
 class HomeScreen extends StatefulWidget {
@@ -137,10 +139,13 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: _currentIndex == 0 || _currentIndex == 1
           ? FloatingActionButton(
         backgroundColor: AppColors.primary,
-        onPressed: () {
-          // On switche vers l'onglet Projets
-          setState(() => _currentIndex = 1);
-        },
+        // CONNECTÉ : navigation vers le formulaire de création de projet
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const ProjectFormScreen(),
+          ),
+        ),
         child: const Icon(Icons.add, color: Colors.white),
       )
           : null,
