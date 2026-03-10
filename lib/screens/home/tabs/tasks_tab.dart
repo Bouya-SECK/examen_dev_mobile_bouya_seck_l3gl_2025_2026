@@ -7,10 +7,10 @@ import 'package:sunu_task/core/constants/app_colors.dart';
 import 'package:sunu_task/core/constants/app_strings.dart';
 import 'package:sunu_task/models/Task.dart';
 import 'package:sunu_task/providers/task_provider.dart';
+import 'package:sunu_task/screens/tasks/task_detail_screen.dart';
 import 'package:sunu_task/widgets/cards/task_card.dart';
 import 'package:sunu_task/widgets/common/loading_indicator.dart';
 
-/// Onglet liste de toutes les tâches avec filtrage
 class TasksTab extends StatelessWidget {
   const TasksTab({super.key});
 
@@ -24,10 +24,7 @@ class TasksTab extends StatelessWidget {
 
     return Column(
       children: [
-        // ---- Barre de filtres ----
         _buildFilterBar(context, taskProvider),
-
-        // ---- Liste des tâches ----
         Expanded(
           child: taskProvider.tasks.isEmpty
               ? _buildEmptyState()
@@ -40,7 +37,13 @@ class TasksTab extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: TaskCard(
                   task: task,
-                  onTap: () {},
+                  // CONNECTÉ : navigation vers le détail de la tâche
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TaskDetailScreen(task: task),
+                    ),
+                  ),
                 ),
               );
             },
@@ -50,21 +53,18 @@ class TasksTab extends StatelessWidget {
     );
   }
 
-  /// Barre de filtres par statut
   Widget _buildFilterBar(BuildContext context, TaskProvider taskProvider) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          // Filtre "Tous"
           _buildFilterChip(
             label: 'Tous',
             isSelected: taskProvider.statusFilter == null,
             onTap: () => taskProvider.clearFilters(),
           ),
           const SizedBox(width: 8),
-          // Filtre "À faire"
           _buildFilterChip(
             label: AppStrings.statusTodo,
             isSelected: taskProvider.statusFilter == TaskStatus.todo,
@@ -72,7 +72,6 @@ class TasksTab extends StatelessWidget {
             color: AppColors.statusTodo,
           ),
           const SizedBox(width: 8),
-          // Filtre "En cours"
           _buildFilterChip(
             label: AppStrings.statusInProgress,
             isSelected: taskProvider.statusFilter == TaskStatus.inProgress,
@@ -80,7 +79,6 @@ class TasksTab extends StatelessWidget {
             color: AppColors.statusInProgress,
           ),
           const SizedBox(width: 8),
-          // Filtre "Terminé"
           _buildFilterChip(
             label: AppStrings.statusDone,
             isSelected: taskProvider.statusFilter == TaskStatus.done,
