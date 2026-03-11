@@ -8,6 +8,7 @@ import 'package:sunu_task/models/Task.dart';
 import 'package:sunu_task/providers/auth_provider.dart';
 import 'package:sunu_task/providers/project_provider.dart';
 import 'package:sunu_task/providers/task_provider.dart';
+import 'package:sunu_task/screens/projects/project_detail_screen.dart';
 import 'package:sunu_task/widgets/cards/project_card.dart';
 
 /// Onglet tableau de bord : vue d'ensemble de l'activité
@@ -24,7 +25,6 @@ class DashboardTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // context.watch écoute les changements des providers
     final authProvider = context.watch<AuthProvider>();
     final projectProvider = context.watch<ProjectProvider>();
     final taskProvider = context.watch<TaskProvider>();
@@ -33,7 +33,6 @@ class DashboardTab extends StatelessWidget {
     final taskCounts = taskProvider.taskCountByStatus;
 
     return RefreshIndicator(
-      // RefreshIndicator permet de tirer vers le bas pour rafraîchir
       onRefresh: () async {
         if (user != null) {
           await projectProvider.loadProjects(user.id);
@@ -45,9 +44,10 @@ class DashboardTab extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
             // ---- Message de bienvenue ----
             Text(
-              '${_getGreeting()}, ${user?.name ?? ''} 👋',
+              '${_getGreeting()}, ${user?.name ?? ''} ',
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -70,7 +70,6 @@ class DashboardTab extends StatelessWidget {
             // ---- Cartes de statistiques ----
             Row(
               children: [
-                // Nombre de projets
                 Expanded(
                   child: _buildStatCard(
                     label: 'Projets',
@@ -80,7 +79,6 @@ class DashboardTab extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Tâches à faire
                 Expanded(
                   child: _buildStatCard(
                     label: 'À faire',
@@ -96,7 +94,6 @@ class DashboardTab extends StatelessWidget {
 
             Row(
               children: [
-                // Tâches en cours
                 Expanded(
                   child: _buildStatCard(
                     label: 'En cours',
@@ -106,7 +103,6 @@ class DashboardTab extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Tâches terminées
                 Expanded(
                   child: _buildStatCard(
                     label: 'Terminées',
@@ -152,6 +148,13 @@ class DashboardTab extends StatelessWidget {
                   child: ProjectCard(
                     project: project,
                     taskCount: 0,
+                    // Navigation vers le détail du projet
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProjectDetailScreen(project: project),
+                      ),
+                    ),
                   ),
                 ),
               ),
