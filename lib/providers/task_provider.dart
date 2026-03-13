@@ -10,27 +10,23 @@ import 'package:uuid/uuid.dart';
 /// TaskProvider gère les tâches avec filtrage et tri.
 class TaskProvider extends ChangeNotifier {
 
-  // ==================== PROPRIÉTÉS PRIVÉES ====================
-
-  /// Toutes les tâches chargées (avant filtrage)
   List<Task> _tasks = [];
 
-  /// Filtre actif sur le statut (null = pas de filtre)
   TaskStatus? _statusFilter;
 
-  /// Filtre actif sur la priorité (null = pas de filtre)
   TaskPriority? _priorityFilter;
 
   bool _isLoading = false;
 
-  // ==================== GETTERS PUBLICS ====================
 
   bool get isLoading => _isLoading;
   TaskStatus? get statusFilter => _statusFilter;
   TaskPriority? get priorityFilter => _priorityFilter;
 
-  /// Retourne les tâches filtrées ET triées.
-  /// Ce getter recalcule la liste à chaque appel.
+  /*
+    Retourne les tâches filtrées ET triées.
+    Ce getter recalcule la liste à chaque appel.
+   */
   List<Task> get tasks {
     List<Task> result = List.from(_tasks);
 
@@ -42,9 +38,12 @@ class TaskProvider extends ChangeNotifier {
       result = result.where((t) => t.priority == _priorityFilter).toList();
     }
 
-    // --- Tri ---
-    // D'abord par statut : inProgress(0) > todo(1) > done(2)
-    // Ensuite par priorité : high(0) > medium(1) > low(2)
+    /*
+      --- Tri ---
+      D'abord par statut : inProgress,todo,done
+      Ensuite par priorité : high,medium,low
+      Si deux tâches ont le même statut, la plus haute passe devant.
+     */
     result.sort((a, b) {
       // On donne un rang numérique à chaque statut
       final int statusOrderA = _statusOrder(a.status);
@@ -63,8 +62,9 @@ class TaskProvider extends ChangeNotifier {
     return result;
   }
 
-  /// Retourne le nombre de tâches par statut.
-  /// Exemple : {TaskStatus.todo: 3, TaskStatus.inProgress: 1, TaskStatus.done: 2}
+  /*
+    Retourne le nombre de tâches par statut.
+   */
   Map<TaskStatus, int> get taskCountByStatus {
     final Map<TaskStatus, int> counts = {};
 
@@ -81,12 +81,10 @@ class TaskProvider extends ChangeNotifier {
     return counts;
   }
 
-  // ==================== CLÉ DE STOCKAGE ====================
-
   static const String _keyTasks = 'tasks';
 
-  // ==================== MÉTHODES CRUD ====================
 
+  // ==================== METHODES CRUD ====================
   /// Charge toutes les tâches d'un projet depuis SharedPreferences.
   Future<void> loadTasks(String projectId) async {
     _isLoading = true;
@@ -116,7 +114,7 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Crée une nouvelle tâche et la sauvegarde.
+  // Crée une nouvelle tâche et la sauvegarde.
   Future<void> createTask({
     required String title,
     required String projectId,
@@ -147,7 +145,7 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Met à jour une tâche existante.
+  // Met à jour une tâche existante.
   Future<void> updateTask(Task updatedTask) async {
     _isLoading = true;
     notifyListeners();
@@ -163,7 +161,7 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Supprime une tâche par son ID.
+  // Supprime une tâche par son ID.
   Future<void> deleteTask(String taskId) async {
     _isLoading = true;
     notifyListeners();
@@ -175,7 +173,7 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Met à jour uniquement le statut d'une tâche (changement rapide).
+  // Met à jour uniquement le statut d'une tâche (changement rapide).
   Future<void> updateTaskStatus(String taskId, TaskStatus newStatus) async {
     final int index = _tasks.indexWhere((t) => t.id == taskId);
 
@@ -189,13 +187,13 @@ class TaskProvider extends ChangeNotifier {
 
   // ==================== FILTRES ====================
 
-  /// Active un filtre par statut.
+  // Active un filtre par statut.
   void setStatusFilter(TaskStatus? status) {
     _statusFilter = status;
     notifyListeners();
   }
 
-  /// Active un filtre par priorité.
+  // Active un filtre par priorité.
   void setPriorityFilter(TaskPriority? priority) {
     _priorityFilter = priority;
     notifyListeners();
@@ -208,29 +206,29 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ==================== MÉTHODES PRIVÉES ====================
+  // ==================== METHODES PRIVEES ====================
 
   /// Donne un rang numérique au statut pour le tri.
   /// Plus le chiffre est petit, plus la tâche apparaît en premier.
   int _statusOrder(TaskStatus status) {
     switch (status) {
-      case TaskStatus.inProgress: return 0; // En premier
+      case TaskStatus.inProgress: return 0;
       case TaskStatus.todo:       return 1;
-      case TaskStatus.done:       return 2; // En dernier
+      case TaskStatus.done:       return 2;
     }
   }
 
   /// Donne un rang numérique à la priorité pour le tri.
   int _priorityOrder(TaskPriority priority) {
     switch (priority) {
-      case TaskPriority.high:   return 0; // En premier
+      case TaskPriority.high:   return 0;
       case TaskPriority.medium: return 1;
-      case TaskPriority.low:    return 2; // En dernier
+      case TaskPriority.low:    return 2;
     }
   }
 
-  /// Sauvegarde toute la liste des tâches dans SharedPreferences.
-  /// On conserve les tâches des autres projets et on met à jour celles du projet courant.
+  // Sauvegarde toute la liste des tâches dans SharedPreferences.
+  // On conserve les tâches des autres projets et on met à jour celles du projet courant.
   Future<void> _saveTasksList() async {
     final String? existingJson = StorageService.instance.getString(_keyTasks);
     List<dynamic> allTasks = [];
@@ -255,7 +253,7 @@ class TaskProvider extends ChangeNotifier {
     await StorageService.instance.setString(_keyTasks, jsonEncode(allTasks));
   }
 
-  /// Supprime toutes les tâches d'un projet (appelée quand on supprime un projet)
+  // Supprime toutes les tâches d'un projet (appelée quand on supprime un projet)
   Future<void> deleteTasksByProjectId(String projectId) async {
     _tasks.removeWhere((t) => t.projectId == projectId);
     await _saveTasksList();

@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart'; // Pour ChangeNotifier
 import 'package:sunu_task/services/storage_service.dart';
 
-/// AppProvider : gère l'état global de l'application
-/// (onboarding terminé ou pas, si l'app est initialisée, etc.)
+// AppProvider : gère l'état global de l'application
+// (onboarding terminé ou pas, si l'app est initialisée, etc.)
 class AppProvider extends ChangeNotifier {
   // ==================== PROPRIÉTÉS PRIVÉES ====================
   bool _isOnboardingComplete = false;
@@ -17,11 +17,11 @@ class AppProvider extends ChangeNotifier {
 
   // ==================== MÉTHODES ====================
 
-  /// Initialise l'application au démarrage
-  /// Charge l'état de l'onboarding depuis le stockage
+  // Initialise l'application au démarrage
+  // Charge l'état de l'onboarding depuis le stockage
   Future<void> init() async {
     _isLoading = true;
-    notifyListeners(); // Met à jour l'UI (affiche un loader par exemple)
+    notifyListeners();
 
     // On initialise le StorageService (comme dans le onboarding_screen)
     await StorageService.instance.init();
@@ -31,10 +31,10 @@ class AppProvider extends ChangeNotifier {
     _isInitialized = true;
     _isLoading = false;
 
-    notifyListeners(); // Met à jour l'UI avec les nouvelles valeurs
+    notifyListeners();
   }
 
-  /// Marque l'onboarding comme terminé et le sauvegarde
+  // Marque l'onboarding comme terminé et le sauvegarde
   Future<void> completeOnboarding() async {
     _isLoading = true;
     notifyListeners();
@@ -46,7 +46,7 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Réinitialise l'onboarding (utile pour les tests ou debug)
+  // Réinitialise l'onboarding (utile pour les tests ou debug)
   Future<void> resetOnboarding() async {
     _isLoading = true;
     notifyListeners();

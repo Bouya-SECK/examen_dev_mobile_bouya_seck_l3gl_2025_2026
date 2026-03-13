@@ -6,9 +6,7 @@ import 'package:sunu_task/services/storage_service.dart';
 import 'package:uuid/uuid.dart';
 
 class AuthProvider extends ChangeNotifier {
-  // ────────────────────────────────────────────────
-  // État
-  // ────────────────────────────────────────────────
+
   User? _currentUser;
   List<User> _users = [];
   bool _isLoading = false;
@@ -20,8 +18,8 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  // ────────────────────────────────────────────────
-  /// À appeler une fois au démarrage de l'application
+
+  // A appeler une fois au démarrage de l'application
   Future<void> initialize() async {
     _isLoading = true;
     notifyListeners();
@@ -51,8 +49,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ────────────────────────────────────────────────
-  /// Connexion
+  // Connexion
   Future<bool> login({
     required String email,
     required String password,
@@ -80,8 +77,8 @@ class AuthProvider extends ChangeNotifier {
     return false;
   }
 
-  // ────────────────────────────────────────────────
-  /// Inscription
+
+  // Inscription
   Future<bool> register({
     required String name,
     required String email,
@@ -123,7 +120,7 @@ class AuthProvider extends ChangeNotifier {
     return true;
   }
 
-  // ────────────────────────────────────────────────
+  // methode de deconnexion
   Future<void> logout() async {
     _isLoading = true;
     notifyListeners();
@@ -135,8 +132,8 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ────────────────────────────────────────────────
-  /// Sauvegarde la liste entière des utilisateurs en JSON
+
+  // Sauvegarde la liste entière des utilisateurs en JSON
   Future<void> _saveUsersList() async {
     final jsonString = jsonEncode(
       _users.map((user) => user.toMap()).toList(),
