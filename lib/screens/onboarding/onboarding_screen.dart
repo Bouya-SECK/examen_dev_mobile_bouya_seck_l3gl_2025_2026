@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sunu_task/core/constants/app_colors.dart';
 import 'package:sunu_task/core/constants/app_strings.dart';
 import 'package:sunu_task/models/OnboardingItem.dart';
-import 'package:sunu_task/screens/home/home_screen.dart';
+import 'package:sunu_task/screens/auth/login_screen.dart';
 import 'package:sunu_task/services/storage_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -18,10 +18,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingItem> _pages = [
     OnboardingItem(
-        icon: Icons.task_alt,
-        title: AppStrings.onboardingTitle1,
-        description: AppStrings.onboardingDesc1,
-        color: AppColors.primary
+      icon: Icons.task_alt,
+      title: AppStrings.onboardingTitle1,
+      description: AppStrings.onboardingDesc1,
+      color: AppColors.primary,
     ),
     OnboardingItem(
       icon: Icons.people,
@@ -37,7 +37,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
   ];
 
-  //====== Cycle de vie =========
   @override
   void initState() {
     super.initState();
@@ -50,27 +49,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
-  //====== Methodes ========
   void _nextPage() {
-    if(_currentPage < _pages.length - 1){
+    if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut);
-    }else {
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else {
       _completeOnboarding();
     }
   }
 
-  Future<void> _completeOnboarding() async{
+  /// Marque l'onboarding comme terminé et navigue vers LoginScreen
+  Future<void> _completeOnboarding() async {
     await StorageService.instance.setOnboardingComplete(true);
-    
-    if(mounted){
+
+    if (mounted) {
+      // MODIFIÉ : on navigue vers LoginScreen au lieu de HomeScreen
       Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeScreen())
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,34 +80,31 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: Column(
           children: [
             _buildSkipButton(),
-
             _buildPages(),
-
-            _buildNavigationButtons()
+            _buildNavigationButtons(),
           ],
-        )
-      )
+        ),
+      ),
     );
   }
 
   Widget _buildSkipButton() {
-    if(_currentPage != _pages.length -1) {
+    if (_currentPage != _pages.length - 1) {
       return Align(
         alignment: Alignment.centerRight,
         child: TextButton(
-            onPressed: _completeOnboarding,
-            child: Text(
-                AppStrings.skip,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textSecondary,
-                )
-            )
+          onPressed: _completeOnboarding,
+          child: Text(
+            AppStrings.skip,
+            style: const TextStyle(
+              fontSize: 16,
+              color: AppColors.textSecondary,
+            ),
+          ),
         ),
       );
     }
-
-    return SizedBox();
+    return const SizedBox();
   }
 
   Widget _buildPages() {
@@ -116,7 +115,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         onPageChanged: (index) {
           setState(() => _currentPage = index);
         },
-        itemBuilder: (context, index){
+        itemBuilder: (context, index) {
           return _buildPage(_pages[index]);
         },
       ),
@@ -133,9 +132,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             width: 160,
             height: 160,
             decoration: BoxDecoration(
-                color: item.color.withAlpha(100),
-                shape: BoxShape.circle,
-              //shape: BoxShape.circle
+              color: item.color.withAlpha(100),
+              shape: BoxShape.circle,
             ),
             child: Icon(
               item.icon,
@@ -144,27 +142,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
 
-          SizedBox(height: 48,),
+          const SizedBox(height: 48),
 
           Text(
             item.title,
             textAlign: TextAlign.center,
-            style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
             ),
           ),
 
-          SizedBox(height: 16,),
+          const SizedBox(height: 16),
 
           Text(
             item.description,
             textAlign: TextAlign.center,
-            style: TextStyle(
-                fontSize: 16,
-                height: 1.5,
-                color: AppColors.textSecondary,
+            style: const TextStyle(
+              fontSize: 16,
+              height: 1.5,
+              color: AppColors.textSecondary,
             ),
           ),
         ],
@@ -173,50 +171,48 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildNavigationButtons() {
-    final isLastPage = _currentPage == _pages.length - 1;
+    final bool isLastPage = _currentPage == _pages.length - 1;
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Previous button - visible when not on first page
           Visibility(
-              visible: _currentPage > 0,
-              child: TextButton(
-                  onPressed: () {
-                    _pageController.previousPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut
-                    );
-                  },
-                  child: Text(
-                      AppStrings.previous,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: AppColors.textSecondary,
-                      )
-                  )
-              )
+            visible: _currentPage > 0,
+            child: TextButton(
+              onPressed: () {
+                _pageController.previousPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              },
+              child: const Text(
+                AppStrings.previous,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
           ),
 
           ElevatedButton(
-              onPressed: _nextPage,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+            onPressed: _nextPage,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+            ),
+            child: Text(
+              isLastPage ? AppStrings.getStarted : AppStrings.next,
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.white,
               ),
-              child: Text(
-                  isLastPage ? AppStrings.getStarted : AppStrings.next,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                  )
-              )
+            ),
           ),
         ],
       ),
     );
   }
-
 }

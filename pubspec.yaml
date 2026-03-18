@@ -1,6 +1,6 @@
 name: sunu_task
 description: "Application de gestion de projets et taches - Cours Flutter L3GL Promo 2025/2026"
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: 'none'
 
 version: 1.0.0+1
 
@@ -12,11 +12,14 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.8
 
-  # Stockage local pour l'onboarding et les perferences
+  # Stockage local pour l'onboarding et les preferences
   shared_preferences: ^2.5.4
 
   # Generation d'IDs uniques
   uuid: ^4.5.2
+
+  # Gestion d'état
+  provider: ^6.1.2
 
 
 dev_dependencies:
@@ -28,5 +31,5 @@ flutter:
   uses-material-design: true
 
   assets:
-   - assets/images/
-   - assets/images/onboarding/
+    - assets/images/
+    - assets/images/onboarding/

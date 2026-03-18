@@ -46,6 +46,21 @@ class StorageService {
     return _prefs.getBool(_keyOnboardingConmplete) ?? false;
   }
 
+  // ────────────────────────────────────────────────
+  // Méthodes génériques pour stocker / lire des strings
+  // ────────────────────────────────────────────────
+
+  Future<void> setString(String key, String value) async {
+    await _prefs.setString(key, value);
+  }
+
+  String? getString(String key) {
+    return _prefs.getString(key);
+  }
+
+  Future<void> remove(String key) async {
+    await _prefs.remove(key);
+  }
   Future<void> setOnboardingComplete(bool value) async {
     await _prefs.setBool(_keyOnboardingConmplete, value);
   }
